@@ -8,11 +8,21 @@ CREATE TABLE IF NOT EXISTS hitting_assessments (
     player_name VARCHAR(255) NOT NULL,
     trainer_name VARCHAR(255),
     notes TEXT,
+    video_analysis_url VARCHAR(1024) NULL,
+    used_blast TINYINT(1) NOT NULL DEFAULT 1,
+    used_hittrax TINYINT(1) NOT NULL DEFAULT 1,
+    used_vald TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    -- M1: type + comparison links for static-site PDF flow
+    assessment_type ENUM('initial', 'retest') NOT NULL DEFAULT 'initial',
+    -- baseline is resolved at report time (earliest initial); not stored
+    previous_assessment_id INT NULL,
+    report_gcs_uri VARCHAR(1024) NULL,
     INDEX idx_player_name (player_name),
     INDEX idx_assessment_date (assessment_date),
-    INDEX idx_player_date (player_name, assessment_date)
+    INDEX idx_player_date (player_name, assessment_date),
+    INDEX idx_ha_player_type (player_name, assessment_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- View 1: Hitting Assessments joined with Blast Swing Data

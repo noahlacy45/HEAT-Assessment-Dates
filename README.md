@@ -1,8 +1,14 @@
 # RBI Hitting Assessment System
 
-A comprehensive system for tracking hitting assessments and automatically linking them with Blast Motion and HitTrax swing data for advanced player development and progress tracking.
+A comprehensive system for tracking hitting assessments and automatically linking them with Blast Motion, HitTrax, and VALD data for player development reporting.
 
-## 🎯 Overview
+## For trainers
+
+**[Trainer Guide](docs/TRAINER_GUIDE.md)** — how to submit assessments, upload mechanics photos, regenerate PDFs, and what shows up in the report.
+
+**[Local testing](docs/LOCAL_TESTING.md)** — run the API + form on your machine against PlayerDev.
+
+## Overview
 
 This system allows hitting trainers to input assessment data that is automatically linked with swing data from Blast Motion and HitTrax devices. The database views enable powerful automated reporting that compares:
 - Current assessment to previous assessment
@@ -12,13 +18,17 @@ This system allows hitting trainers to input assessment data that is automatical
 
 ## 📋 Features
 
-- **Simple Assessment Entry**: Minimal required fields (Player Name, Assessment Date)
+- **Simple Assessment Entry**: Static web form for player, date, Initial/Retest, and comparison links
+- **Draft PDF reports**: Blast/HitTrax/VALD tables + charts; upload to private GCS with signed open links
+- **PDF version history**: each regenerate keeps prior PDFs (`assessment_report_versions`)
+- **Trainer visuals**: mechanics + extra photo uploads with captions
 - **Auto-Incrementing IDs**: Automatic unique assessment ID generation
-- **Data Linking**: Automatic joins with Blast and HitTrax swing data (±7 days)
+- **Data Linking**: Assessment-day joins with Blast, HitTrax, and VALD (PDF pipeline)
 - **Multiple Views**: Pre-built SQL views for different analysis needs
-- **REST API**: Full CRUD operations for assessments
+- **REST API**: Assessment create/read, attachments, report regenerate, report versions
 - **Autocomplete**: Player and trainer name suggestions from history
 - **Progress Tracking**: Built-in assessment numbering and history tracking
+
 
 ## 🗄️ Database Schema
 

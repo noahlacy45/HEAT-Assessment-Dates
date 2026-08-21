@@ -27,31 +27,33 @@ If your table names or column names are different, edit `deployment/schema.sql` 
 ### Step 2: Deploy Backend (2 minutes)
 
 ```bash
-# 1. Update project settings
-# Edit deployment/deploy.sh and set your PROJECT_ID
+# Prefer Cloud Build build+deploy (see docs/DEVELOPER_OPS.md)
+cd backend
+gcloud builds submit --config cloudbuild.yaml .
+cd ..
 
-# 2. Set up secrets
-chmod +x deployment/setup-secrets.sh
-./deployment/setup-secrets.sh
-# Enter your database credentials when prompted
-
-# 3. Deploy
-chmod +x deployment/deploy.sh
-./deployment/deploy.sh
+# Or: bash ./deployment/deploy.sh
 ```
 
-After deployment completes, you'll see your service URL. Copy it!
+After deployment completes, note the service URL (currently
+`https://heat-assessment-api-gyhwqhslwq-uk.a.run.app`).
+
+Also run once on PlayerDev if missing:
+- `deployment/assessment_attachments.sql`
+- `deployment/assessment_report_versions.sql`
 
 ### Step 3: Configure Frontend (1 minute)
 
-```bash
-# Edit frontend/index.html
-# Find this line (around line 301):
-const API_URL = 'https://your-backend-url.run.app/api/hitting-assessment';
+`frontend/index.html` defaults to the live `heat-assessment-api` URL.
+For a local backend, add before the main script:
 
-# Replace with your actual Cloud Run service URL from Step 2
-const API_URL = 'https://hitting-assessment-api-xxxx.run.app/api/hitting-assessment';
+```html
+<script>window.HEAT_API_BASE = 'http://localhost:8080';</script>
 ```
+
+Do **not** point PDF work at legacy `hitting-assessment-api`.
+
+**Local testing (API + form on your machine):** see [LOCAL_TESTING.md](LOCAL_TESTING.md).
 
 ### Step 4: Test It!
 
@@ -88,7 +90,7 @@ Your system is now ready to use. Trainers can access the form at the frontend UR
 ### For Daily Use
 1. **Deploy Frontend**: Upload `frontend/index.html` to your web server
 2. **Bookmark**: Trainers should bookmark the form URL
-3. **Train Staff**: Show trainers how to fill out the form after assessments
+3. **Train Staff**: Share [docs/TRAINER_GUIDE.md](TRAINER_GUIDE.md) (submit flow, photos, regen, PDF contents)
 
 ### For Automated Reports
 
@@ -120,12 +122,12 @@ ORDER BY ha.assessment_date;
 
 **Views return no data?**
 - Check that player names match exactly between tables
-- Verify dates are within ±7 days of swing data
+- Verify swing data exists on the assessment calendar day
 - Check column names match your actual Blast/HitTrax tables
 
 **Database connection failed?**
 - Verify secrets are set: `gcloud secrets list`
-- Check Cloud Run logs: `gcloud run logs read hitting-assessment-api`
+- Check Cloud Run logs: `gcloud run logs read heat-assessment-api --region us-east4`
 - Test database connection from Cloud Shell
 
 ## 📞 Need Help?
@@ -141,8 +143,8 @@ ORDER BY ha.assessment_date;
 
 When you create an assessment with date `2024-02-04`:
 
-1. **Blast View**: Finds all Blast sessions for that player between `2024-01-28` and `2024-02-11` (±7 days)
-2. **HitTrax View**: Finds all HitTrax sessions for that player in the same date range
+1. **Blast View**: Finds Blast sessions for that player on `2024-02-04` (assessment day only)
+2. **HitTrax View**: Finds HitTrax sessions for that player on the same day
 3. **Combined View**: Matches Blast and HitTrax swings using the `ts` timestamp field
 
 ### Assessment Numbering

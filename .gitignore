@@ -61,6 +61,26 @@ tmp/
 temp/
 *.tmp
 
+# Generated HEAT PDFs
+reports/
+backend/reports/
+notebooks/reports/
+
+# Local example assets (keep out of git; use GCS / docs links)
+example_hitter_assessment.pdf
+
 # OS files
 Thumbs.db
 .DS_Store
+
+# Internal planning (keep local)
+docs/STATIC_SITE_*_PLAN.md
+docs/STATIC_SITE_*_OVERVIEW.md
+
+# Experimental notebooks and sample CSVs (keep local)
+notebooks/*_debug.ipynb
+notebooks/*_preview.ipynb
+notebooks/*_explore.ipynb
+notebooks/*.csv
+notebooks/wellness_readiness_report.ipynb
+
