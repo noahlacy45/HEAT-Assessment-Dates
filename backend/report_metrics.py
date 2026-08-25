@@ -224,21 +224,21 @@ def _hittrax_rows(conn, player_name: str, start: datetime, end: datetime) -> lis
 
     Prefer raw ingest (hittrax_plays + hittrax_session). Use HitTrax **Velo**
     (exit speed) not EBV1 — EBV1 includes negatives/zeros and is not report EV.
-    Only rows with Velo > 0 (measured contact). Convert SI → mph / feet.
+    Only rows with Velo > 0 (measured contact). hittrax_plays is converted to
+    mph / feet at ingestion (Hittrax_Prod.py) — no conversion here, or it
+    double-converts.
 
-    Plate-crossing location for zone charts: **PP1/PP2** (meters) and **QD**
+    Plate-crossing location for zone charts: **PP1/PP2** and **QD**
     (HitTrax 1–13 zone id). PBH/PBV are pitch *break*, not plate position.
-    Depth of contact: **Intersect3 − PP3** (meters; PP3 ≈ plate depth / front-edge zero).
+    Depth of contact: **Intersect3 − PP3**.
     Fall back to silver tables (already unit-converted; no PP/QD) if the join path fails.
     """
-    mps_to_mph = 2.23694
-    m_to_ft = 3.28084
     queries = [
-        f"""
+        """
         SELECT
-            p.Velo * {mps_to_mph} AS ev,
+            p.Velo AS ev,
             p.Elv AS launch_angle,
-            p.Dist * {m_to_ft} AS distance,
+            p.Dist AS distance,
             p.HorzAngle AS horz_angle,
             p.Hand AS hand,
             p.PBH AS pbh,
