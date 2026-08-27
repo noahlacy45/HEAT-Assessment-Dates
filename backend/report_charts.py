@@ -16,8 +16,14 @@ DARK_BG = "#2c2e33"
 LEFT_BLUE = "#3b82f6"
 RIGHT_ORANGE = "#f97316"
 M_TO_IN = 39.3701
+FT_TO_IN = 12.0
+FT_TO_M = 0.3048
 # HitTrax PP3 ≈ physical plate depth (0.4318 m = 17 in). Intersect3 shares that
 # frame; subtract PP3 so depth / POI 0 = front edge of the plate.
+# PP1/PP2/PP3 are stored in FEET as of the ingestion unit-conversion fix
+# (Hittrax_Prod.py); Intersect1/2/3 are untouched by that fix and remain in
+# HitTrax's native meters. This fallback stays in meters since it's compared
+# against a pp3 value that gets converted back to meters at the point of use.
 PP3_PLATE_DEPTH_M = 0.4318
 
 
@@ -336,8 +342,10 @@ def _pitch_xy(c: dict[str, Any]) -> Optional[tuple[float, float]]:
     """
     pp1, pp2 = c.get("pp1"), c.get("pp2")
     if pp1 is not None and pp2 is not None:
-        x_m = ORIENTATION * float(pp1)
-        y_m = float(pp2)
+        # pp1/pp2 are feet (ingestion unit fix); the zone constants below are
+        # meters, so convert here rather than changing every constant.
+        x_m = ORIENTATION * float(pp1) * FT_TO_M
+        y_m = float(pp2) * FT_TO_M
         x_span = 2.0 * (ZONE_HALF_WIDTH_M + CHASE_MARGIN_M)
         y_span = 2.0 * CHASE_MARGIN_V_M + (ZONE_TOP_M - ZONE_BOTTOM_M)
         nx = (x_m - (-ZONE_HALF_WIDTH_M - CHASE_MARGIN_M)) / x_span
@@ -470,6 +478,11 @@ def _contact_poi_inches(c: dict[str, Any]) -> Optional[float]:
     """
     Point of impact / depth of contact in inches, zeroed at front of plate.
     (Intersect3 − PP3) × M_TO_IN; excludes no-tracking sentinel rows.
+
+    intersect3 is HitTrax native meters (not touched by the ingestion unit
+    fix); pp3 is feet (converted at ingestion). Convert pp3 back to meters
+    here so the subtraction is unit-consistent before the M_TO_IN inches
+    conversion.
     """
     if _intersect_tracking_missing(c):
         return None
@@ -477,7 +490,7 @@ def _contact_poi_inches(c: dict[str, Any]) -> Optional[float]:
     if i3 is None:
         return None
     pp3 = c.get("pp3")
-    pp3_m = float(pp3) if pp3 is not None else PP3_PLATE_DEPTH_M
+    pp3_m = float(pp3) * FT_TO_M if pp3 is not None else PP3_PLATE_DEPTH_M
     return (float(i3) - pp3_m) * M_TO_IN
 
 
@@ -769,8 +782,9 @@ def _plate_vertical_chart(contacts: list[dict[str, Any]]) -> Optional[bytes]:
             continue
         pp1, pp2 = c.get("pp1"), c.get("pp2")
         if pp1 is not None and pp2 is not None:
-            lat_in = ORIENTATION * float(pp1) * M_TO_IN
-            height_in = float(pp2) * M_TO_IN
+            # pp1/pp2 are feet (ingestion unit fix) — use FT_TO_IN, not M_TO_IN.
+            lat_in = ORIENTATION * float(pp1) * FT_TO_IN
+            height_in = float(pp2) * FT_TO_IN
         else:
             xy = _plate_xy(c)
             if xy is None:
@@ -864,7 +878,7 @@ def _plate_horizontal_chart(contacts: list[dict[str, Any]]) -> Optional[bytes]:
     """
     EV by depth of contact: lateral × depth inches, with inch markers like HitTrax.
 
-    Lateral: PP1 (meters) × M_TO_IN (not Intersect1 / PBH).
+    Lateral: PP1 (feet, per ingestion unit fix) × FT_TO_IN (not Intersect1 / PBH).
     Depth: (Intersect3 − PP3) × M_TO_IN so 0 = front of plate (HitTrax axis).
     +depth = out in front of the plate (toward pitcher); tip of plate = deep / catcher.
     """
@@ -875,7 +889,7 @@ def _plate_horizontal_chart(contacts: list[dict[str, Any]]) -> Optional[bytes]:
         depth_in = _contact_poi_inches(c)
         if pp1 is None or ev is None or depth_in is None:
             continue
-        lat_in = ORIENTATION * float(pp1) * M_TO_IN
+        lat_in = ORIENTATION * float(pp1) * FT_TO_IN
         pts.append((lat_in, depth_in, float(ev)))
     if not pts:
         return None
