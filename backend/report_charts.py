@@ -889,6 +889,8 @@ def _plate_horizontal_chart(contacts: list[dict[str, Any]]) -> Optional[bytes]:
         depth_in = _contact_poi_inches(c)
         if pp1 is None or ev is None or depth_in is None:
             continue
+        if abs(depth_in) > 30:  # HitTrax POI should be within a few feet of the plate; anything beyond this is a mistracked/garbage read
+            continue
         lat_in = ORIENTATION * float(pp1) * FT_TO_IN
         pts.append((lat_in, depth_in, float(ev)))
     if not pts:
